@@ -5,6 +5,11 @@ import org.springframework.web.bind.annotation.*;
 
 import com.rrohan419.bookreview.dto.AuthRequest;
 import com.rrohan419.bookreview.dto.AuthResponse;
+import com.rrohan419.bookreview.dto.SignupUser;
+import com.rrohan419.bookreview.model.User;
+import com.rrohan419.bookreview.service.UserService;
+
+import jakarta.validation.Valid;
 
 import java.util.Map;
 
@@ -12,24 +17,22 @@ import java.util.Map;
 @RequestMapping("/auth")
 public class AuthController {
 
-    private static final Map<String, String> credsToToken = Map.of(
-            "admin:admin123", "token-admin",
-            "reader:reader123", "token-reader"
-    );
+    private final UserService userService;
 
-    private static final Map<String, String> tokenToRole = Map.of(
-            "token-admin", "ADMIN",
-            "token-reader", "READER"
-    );
+    public AuthController(UserService userService){
+        this.userService = userService;
+    }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody AuthRequest req) {
-        String key = req.getUsername() + ":" + req.getPassword();
-        String token = credsToToken.get(key);
-        if (token == null) {
-            return ResponseEntity.status(401).body(Map.of("error", "Invalid credentials"));
-        }
-        String role = tokenToRole.get(token);
-        return ResponseEntity.ok(new AuthResponse(token, role));
+    public ResponseEntity<AuthResponse> login(@RequestBody AuthRequest authRequest) {
+
+        AuthResponse token = userService.loginUser(authRequest);
+        
+        return ResponseEntity.ok(token);
+    }
+
+    @PostMapping("/signup")
+    public ResponseEntity<User> signupUser(@RequestBody @Valid SignupUser signupUser) {
+        return ResponseEntity.ok(userService.createUser(signupUser));
     }
 }
